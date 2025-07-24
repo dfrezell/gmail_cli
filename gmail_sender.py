@@ -7,13 +7,14 @@ from email.mime.base import MIMEBase
 from email import encoders
 from gmail_auth import authenticate_gmail
 
-def create_message(sender, to, subject, message_text, attachments=None):
-    message = MIMEMultipart()
+def create_message(sender, to, subject, message_html, message_text, attachments=None):
+    message = MIMEMultipart("mixed" if attachments else "alternative")
     message['to'] = to
     message['from'] = sender
     message['subject'] = subject
     
     message.attach(MIMEText(message_text, 'plain'))
+    message.attach(MIMEText(message_html, 'html'))
     
     if attachments:
         for file_path in attachments:
@@ -37,10 +38,10 @@ def create_message(sender, to, subject, message_text, attachments=None):
     raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
     return {'raw': raw_message}
 
-def send_email(sender, to, subject, message_text, attachments=None):
+def send_email(sender, to, subject, message_html, message_text, attachments=None):
     try:
         service = authenticate_gmail()
-        message = create_message(sender, to, subject, message_text, attachments)
+        message = create_message(sender, to, subject, message_html, message_text, attachments)
         
         sent_message = service.users().messages().send(
             userId='me', body=message
